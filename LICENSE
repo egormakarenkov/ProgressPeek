@@ -1,0 +1,86 @@
+ProgressPeek Source-Available License 1.0
+Copyright (c) 2026 Egor Makarenkov
+
+1. Scope and permission
+
+"Licensor" means Egor Makarenkov. "Software" means the original ProgressPeek
+code, application binaries, and accompanying original documentation expressly
+offered by the Licensor under this license, including the original 0.4.0-beta
+release and its archived source. "Modified Version" means a version containing
+or derived from any copyright-protected part of the Software.
+
+Subject to these terms, the Licensor grants you a worldwide, non-exclusive,
+royalty-free copyright license to use, run, study, copy and modify the Software,
+and to distribute the Software or Modified Versions free of charge. Personal,
+educational, nonprofit and internal business/workplace use are permitted,
+including use in paid work and production of your own work products. These
+permissions extend only to rights the Licensor owns or is authorized to grant.
+
+2. No sale or paid access without separate permission
+
+Without separate written permission from the Licensor, you may not sell,
+rent, lease, sublicense for payment, or charge for downloading, accessing or
+using the Software or any Modified Version. This includes paid subscriptions
+or hosted services providing access to the Software or a Modified Version.
+Renaming, modifying, or bundling it with another product does not remove this
+restriction: you may not distribute the Software or a Modified Version as part
+of a product or bundle for which recipients must pay.
+
+This restriction does not prohibit using the Software internally to perform
+paid work, or selling work products that do not themselves contain or provide
+access to the Software or a Modified Version. You may charge for optional
+installation, training or support labor, provided payment is not a condition
+of obtaining or using your distributed copy of the Software. Free distribution
+must not require a donation or other consideration.
+
+3. Attribution and notices
+
+Every distributed copy of the Software or a Modified Version, in source or
+binary form, must include this license and the accompanying NOTICE text.
+Retain applicable copyright and attribution notices. Include the following
+credit in accompanying documentation or an accessible About/credits screen:
+
+ProgressPeek — originally created by Egor Makarenkov.
+Original project: https://github.com/egormakarenkov/ProgressPeek
+
+If you distribute a Modified Version, clearly identify it as modified, identify
+your changes, and do not imply it is an official release or endorsed by the
+Licensor. You need not add a new in-app screen to an unchanged original binary;
+accompanying documentation satisfies this attribution requirement.
+
+4. Ownership, branding and third-party material
+
+You do not acquire ownership of the original Software. You retain any rights
+you hold in your own original contributions, subject to the restrictions on
+the original Software and Modified Versions. No trademark rights or right to
+claim endorsement are granted; truthful attribution is permitted. Third-party
+components retain their own licenses; this license does not replace them.
+
+The Licensor may distribute or license their own work on other terms,
+including commercially. This license does not authorize the Licensor to
+relicense a contributor's independently owned contributions without permission.
+
+5. Duration and termination
+
+These permissions continue for the duration of the applicable copyright while
+you comply with these terms. A later license change for future versions does
+not revoke permissions for copies already provided under this license. If you
+violate these terms, your permissions terminate. For a first violation, they
+are reinstated if you fully cure it within 30 days after receiving written
+notice. No provision restricts rights you have independently under applicable
+law, including applicable copyright exceptions.
+
+6. Disclaimer
+
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS IS",
+WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. THE LICENSOR IS NOT
+LIABLE FOR CLAIMS, DAMAGES OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS
+USE, WHETHER IN CONTRACT, TORT OR OTHERWISE.
+
+7. Reserved rights
+
+Rights not expressly granted are reserved. This is a custom source-available
+license, not an OSI-approved open-source license. Separate commercial
+permission must come from the Licensor; opening an issue or submitting a
+request does not itself grant that permission.

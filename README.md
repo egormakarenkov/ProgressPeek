@@ -70,4 +70,6 @@ For bug reports, include the version, Windows version, interface used, reproduct
 
 ## License and publication status
 
-Software usage/source licensing terms and the public contribution policy remain publisher decisions. No MIT or other open-source license is implied. Version 0.4.0-beta is a prerelease; repository visibility controls access to its files and downloads.
+ProgressPeek is source-available under the custom [ProgressPeek Source-Available License 1.0](LICENSE). Personal and workplace use, modifications, and free redistribution are permitted with credit to Egor Makarenkov and ProgressPeek. Selling the app or modified versions, paid access, and paid bundles containing the app require separate written permission. See [NOTICE](NOTICE) and the full license for the exact terms. This is not an OSI-approved open-source license.
+
+The license and notice supplied alongside the original release apply to its unchanged binaries and archived source. Licensing-pending statements inside archived documentation describe historical status. Version 0.4.0-beta remains a beta; repository visibility controls access to downloads.
