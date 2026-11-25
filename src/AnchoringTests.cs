@@ -1,0 +1,48 @@
+using System;
+using System.IO;
+using System.Reflection;
+using ProgressPeek;
+public static class AnchoringTests {
+ [STAThread]public static int Main(){int total=0,failed=0;var folder=Path.Combine(Path.GetTempPath(),"ProgressPeek-anchor-"+Guid.NewGuid().ToString("N"));try{Run((ok,name)=>{total++;if(!ok){failed++;Console.WriteLine("FAIL: "+name);}},folder);}finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}Console.WriteLine("Anchoring and retry checks: "+total+", failures: "+failed);return failed==0?0:1;}
+ static Snapshot Read(string text,string id,bool tail,bool running,bool final){
+  var s=ReaderFlow.ReadFlat(new[]{new MessageNode("Text","You said:"),new MessageNode("Text",text),new MessageNode("Text","ChatGPT said:"),new MessageNode("Text",running?"Thinking":"Answer"),new MessageNode(final?"Button":"Text",final?"Copy response":"Working for 2s")},true,running);
+  s.Chat="A";typeof(ReaderFlow).GetMethod("ApplyProvenance").Invoke(null,new object[]{s,id,tail});return s;
+ }
+ public static void Run(Action<bool,string> check,string folder){
+  var boundary=typeof(ReaderFlow).GetMethod("ApplyProvenance");check(boundary!=null,"production reader provides latest-tail provenance");
+  var tailPolicy=typeof(Monitor).Assembly.GetType("ProgressPeek.ReaderTailPolicy");check(tailPolicy!=null,"provider separates tail position proof from clipped response body");
+  if(tailPolicy!=null){var decide=tailPolicy.GetMethod("IsLatest");var nodes=new System.Collections.Generic.List<MessageNode>{new MessageNode("Text","You said:"),new MessageNode("Text","Build large feature"),new MessageNode("Text","ChatGPT said:")};for(int i=0;i<2000;i++)nodes.Add(new MessageNode("Text","Tool output"));nodes.Add(new MessageNode("Text","Thinking"));var oversized=ReaderFlow.ReadFlat(nodes,false,true);bool proof=(bool)decide.Invoke(null,new object[]{true,null,false});ReaderFlow.ApplyProvenance(oversized,"large1",proof);check(oversized.Truncated&&new TaskScope().Normalize(oversized,DateTime.UtcNow).Error.Length==0,"oversized current tool body retains proven tail position");check(!(bool)decide.Invoke(null,new object[]{true,null,true}),"explicit historical jump rejects structural tail");check(!(bool)decide.Invoke(null,new object[]{false,null,false}),"unsupported layout cannot trust absence of jump control");check(!(bool)decide.Invoke(null,new object[]{true,false,false})&&(bool)decide.Invoke(null,new object[]{true,true,false}),"scroll-position evidence remains authoritative");}
+  if(boundary!=null){
+   var t=new DateTime(2026,10,1);var scope=new TaskScope();var life=new Lifecycle();
+   var first=scope.Normalize(Read("Build feature","m1",true,true,false),t);life.Update(first,t);string key=life.Key;
+   var add=scope.Normalize(Read("Also test restart","m2",true,true,false),t.AddSeconds(1));life.Update(add,t.AddSeconds(1));
+   var old=scope.Normalize(Read("Old task","m0",false,false,true),t.AddSeconds(2));life.Update(old,t.AddSeconds(2));life.Update(old,t.AddSeconds(4));
+   check(!life.Finished&&life.Key==key&&life.LastValid.Prompt=="Build feature","historical footer cannot reset or complete active task");
+   var back=scope.Normalize(Read("Also test restart","m2",true,true,false),t.AddSeconds(5));life.Update(back,t.AddSeconds(5));
+   check(back.Prompt=="Build feature"&&back.FollowUps.Contains("Also test restart")&&!back.FollowUps.Contains("Old task")&&life.Key==key,"return retains original and only submitted addition");
+   var end=scope.Normalize(Read("Also test restart","m2",true,false,true),t.AddSeconds(6));life.Update(end,t.AddSeconds(6));life.Update(end,t.AddSeconds(7));check(life.Finished,"current tail completion ends locally");scope.End(end);
+   var repeat=scope.Normalize(Read("Build feature","m3",true,true,false),t.AddSeconds(8));check(Lifecycle.TaskKey(repeat)!=key&&repeat.FollowUps=="","identical submitted new turn gets fresh identity");
+   var fresh=new TaskScope();var history=fresh.Normalize(Read("Old task","m0",false,false,true),t);check(history.Error.Length>0,"startup while scrolled waits for latest response");
+   var b=Read("Other task","b1",true,true,false);b.Chat="B";scope.Normalize(b,t);check(scope.Normalize(Read("Build feature","m3",true,true,false),t).Prompt=="Build feature","chat switching retains anchors");
+  }
+  var complete=typeof(Storage).GetMethod("CompleteReservation");check(complete!=null,"reservations expose request outcome");if(complete==null)return;
+  check(CheckOutcomePolicy.Failure(new TimeoutException())=="transient"&&CheckOutcomePolicy.Failure(new InvalidOperationException("authentication"))=="permanent"&&CheckOutcomePolicy.Failure(new InvalidOperationException("quota"))=="permanent","temporary timeout retries but authentication and quota do not");
+  check(CheckOutcomePolicy.Failure(new CliFailureException(1,new CliEvents(),"network connection reset"))=="transient","actual CLI transport exception permits bounded retry");
+  foreach(string detail in new[]{"authentication rejected network request","quota exceeded network request","invalid schema network response"})check(CheckOutcomePolicy.Failure(new CliFailureException(1,new CliEvents(),detail))=="permanent","nonrecoverable CLI failure overrides transport wording: "+detail);
+  check(CheckOutcomePolicy.Failure(new CliFailureException(1,new CliEvents{ToolUsed=true},"network connection reset"))=="permanent","tool use remains rejected despite transport error");
+  var manualGate=typeof(Card).GetMethod("AcceptManualScan",BindingFlags.Instance|BindingFlags.NonPublic);check(manualGate!=null,"manual callback exposes normalized scan acceptance boundary");
+  if(manualGate!=null){var manualCard=new Card(new Storage(Path.Combine(folder,"manual-gap")),true);try{var hidden=BindingFlags.Instance|BindingFlags.NonPublic;var fresh=Read("Build feature","latest1",true,true,false);typeof(Card).GetMethod("Observe",hidden).Invoke(manualCard,new object[]{fresh});var historical=Read("Old task","old1",false,false,true);int before=((Storage)typeof(Card).GetField("store",hidden).GetValue(manualCard)).Ledger.DailyCalls;bool accepted=(bool)manualGate.Invoke(manualCard,new object[]{historical});check(!accepted&&((Snapshot)typeof(Card).GetField("latest",hidden).GetValue(manualCard)).Error.Length>0,"manual callback rejects normalized historical scan with empty raw error");check(((Snapshot)typeof(Card).GetField("current",hidden).GetValue(manualCard)).Prompt=="Build feature"&&((Storage)typeof(Card).GetField("store",hidden).GetValue(manualCard)).Ledger.DailyCalls==before,"rejected manual scan retains anchor without consuming a check");check((bool)manualGate.Invoke(manualCard,new object[]{fresh}),"manual callback accepts accessible current tail");}finally{manualCard.Close();}}
+  var card=new Card(new Storage(Path.Combine(folder,"stale")),true);try{var hidden=BindingFlags.Instance|BindingFlags.NonPublic;var a=new Snapshot{Chat="A",Prompt="First",Generating=true};typeof(Card).GetMethod("Observe",hidden).Invoke(card,new object[]{a});var epoch=(Epoch)typeof(Card).GetField("epoch",hidden).GetValue(card);int captured=epoch.Current;typeof(Card).GetMethod("Observe",hidden).Invoke(card,new object[]{new Snapshot{Chat="B",Prompt="Second",Generating=true}});typeof(Card).GetMethod("CompleteEstimate",hidden).Invoke(card,new object[]{captured,new CliResult{Map=new TaskMap{Low=80,High=90}},null,a});check(typeof(Card).GetField("map",hidden).GetValue(card)==null,"stale async result cannot overwrite switched chat");}finally{card.Close();}
+  var store=new Storage(Path.Combine(folder,"retry"));store.Settings.EnforceDailyLimit=false;store.Settings.EnforceTaskLimit=false;var now=new DateTime(2026,10,1,0,0,0,DateTimeKind.Utc);int count;string reason;
+  check(store.Reserve("task","same",false,now,30,out count,out reason),"first attempt reserved");complete.Invoke(store,new object[]{"task","same","transient",now});
+  check(!store.Reserve("task","same",false,now.AddSeconds(10),30,out count,out reason),"transient retry waits bounded delay");
+  check(store.Reserve("task","same",false,now.AddSeconds(31),30,out count,out reason)&&count==2,"failed unchanged evidence retries and counts attempt");complete.Invoke(store,new object[]{"task","same","transient",now.AddSeconds(31)});
+  check(store.Reserve("task","same",false,now.AddSeconds(92),30,out count,out reason),"second bounded retry allowed");complete.Invoke(store,new object[]{"task","same","transient",now.AddSeconds(92)});
+  check(!store.Reserve("task","same",false,now.AddSeconds(300),30,out count,out reason),"retry exhaustion does not loop forever");
+  check(store.Reserve("task","changed",false,now.AddSeconds(301),30,out count,out reason),"new evidence remains eligible");complete.Invoke(store,new object[]{"task","changed","permanent",now.AddSeconds(301)});
+  check(!store.Reserve("task","changed",false,now.AddSeconds(500),30,out count,out reason),"permanent failure blocks automatic unchanged retry");
+  check(store.Reserve("task","changed",true,now.AddSeconds(501),30,out count,out reason),"manual refresh remains available");complete.Invoke(store,new object[]{"task","changed","success",now.AddSeconds(501)});
+  check(!store.Reserve("task","new",false,now.AddSeconds(510),30,out count,out reason)&&store.Reserve("task","new",false,now.AddSeconds(532),30,out count,out reason),"new evidence respects configured cadence");
+  var reopened=new Storage(Path.Combine(folder,"retry"));reopened.Settings.EnforceDailyLimit=false;reopened.Settings.EnforceTaskLimit=false;check(reopened.Reserve("task","new",false,now.AddSeconds(563),30,out count,out reason),"interrupted pending reservation can recover after restart");
+ }
+}
